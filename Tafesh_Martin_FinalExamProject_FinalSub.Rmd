@@ -1,0 +1,528 @@
+---
+title: "Video Game Sales"
+authors: "Fathia Tafesh and Corwin (Rina) Martin"
+output: 
+    html_document:
+        df_print: paged
+        highlight: tango
+        theme: flatly
+        toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#knitr::opts_knit$set(root.dir = "~/College/Statistical Methods")
+knitr::opts_knit$set(root.dir = "C:/Users/fathi/Downloads/StatMethods")
+```
+
+*Import dataset and load packages*
+
+Dataset: Video Game Sales by Anand Shaw, Kaggle.com
+
+https://www.kaggle.com/datasets/anandshaw2001/video-game-sales
+
+```{r warning=F, message=F}
+library(tidyverse)
+sales_df <- read_csv(file = "vgsales.csv")
+sales_df
+```
+
+# 1 Exploratory Data Analysis
+
+
+## 1.1 Data Description
+**This dataset describes video game sales across platforms, genres, and regions.**
+
+## 1.2 Key Concepts in Statistics
+
+Assume data is population for only this section. You might need to change this section depending on what you plan to research in Section 2. 
+
+a) What is the population? Check Section 2 for this.
+
+**All video game sales across platforms, genres, and regions.**
+
+b) What is the sample? Check Section 2 for this.
+
+**Video game sales from more than 16,500 games**
+
+
+c) What are the variables? What type of variables are they?
+
+  - **Platform: Categorical**
+  - **Genre: Categorical**
+  - **North American Sales: Quantitative**
+  - **Japan Sales: Quantitative**
+  - **Global Sales: Quantitative**
+  - **Year: Categorical**
+
+d) What are the parameters?
+
+  - Mean sales of all video games
+  - Proportion of all games released for specific platforms
+  - Proportion of all games released in each year
+  - Proportion of all video game sales from each country
+  - Proportion of all video games belonging to specific genres
+
+e) What are the statistics?
+
+  - Mean sales of 16598 video games
+  - Proportion of 16598 games released for specific platforms
+  - Proportion of 16598 games released in each year
+  - Proportion of 16598 video game sales from each country
+  - Proportion of 16598 video games belonging to specific genres
+
+## 1.3 Key Concepts in Statistics
+
+a) Find the distribution of the two quantitative variables: center, spread and shape. 
+
+### Variable one: North American Video Game Sales (in millions)
+```{r}
+naSales <- sales_df %>% pull(NA_Sales)
+
+#Center
+naSales %>% mean()
+#Spread
+naSales %>% sd()
+#Shape
+ggplot(mapping = aes(x = naSales)) +
+  geom_histogram(color = "black", fill = "coral", binwidth = 0.1)
+
+```
+
+### Variable two: Japan Video Game Sales (in millions)
+```{r}
+jpSales <- sales_df %>% pull(JP_Sales)
+
+#Center
+jpSales %>% mean()
+#Spread
+jpSales %>% sd()
+#Shape
+ggplot(mapping = aes(x = jpSales)) +
+  geom_histogram(color = "black", fill = "coral", binwidth = 0.1)
+
+```
+
+**Distribution is skewed right for both**
+
+b) Create bar graph and relative frequency table for the two categorical variables. 
+
+### Variable one
+```{r}
+#Frequency Bar graph
+sales_df %>%
+  ggplot(mapping = aes(x = Genre)) +
+  geom_bar(color = "black", fill = "coral") +
+  labs(y = "Frequency")
+
+#Rel Frequency
+sales_df%>%
+  count(Genre, name = "Frequency")%>%
+  mutate(rel_freq = Frequency/sum(Frequency))
+```
+
+### Variable two
+```{r}
+#Frequency Bar graph
+sales_df %>%
+  ggplot(mapping = aes(x = Platform)) +
+  geom_bar(color = "black", fill = "coral") +
+  labs(y = "Frequency")
+
+#Rel Frequency
+sales_df%>%
+  count(Platform, name = "Frequency")%>%
+  mutate(rel_freq = Frequency/sum(Frequency))
+
+```
+
+
+# 2 Probability Distributions
+
+Assume the data uploaded is population data in this subsection only. 
+
+## 2.1 Qualitative Data 
+
+Select one qualitative variable and use one level of the qualitative variable as success.
+
+**Selected Variable: Genre**
+**Success: Genre = Puzzle**
+
+a) Show the number of successes is from binomial distribution. 
+P(X)
+
+  - There is a fixed number of observations (n = 16598)
+  - Each trial is independent
+  - Only two outcomes (Genre = "Puzzle" or Genre $\ne$ "Puzzle")
+  
+```{r}
+n <- 16598
+x <- sales_df %>% filter(Genre == "Puzzle") %>% pull(Genre) %>% length
+
+p <- x/n
+p
+```
+
+
+b) Find the probability the random variable is more than its mean. 
+P(X > 582)
+```{r}
+1 - pbinom(q = 581, size = n, prob = p)
+```
+
+c) Find the sampling distribution of the sample proportion of the qualitative variable with a sample size of at least 50 (this number might need to change to satisfy the requirement).
+
+*Mean*
+```{r}
+p
+```
+
+*Standard Deviation*
+```{r}
+sqrt(p * (1- p)/n)
+```
+
+*Shape*
+
+Shape = **approx. normal**
+```{r}
+n*p*(1 - p) >= 10
+
+puzzles_pmf <- tibble(x = 0:1000, #Applying cutoff at x = 1000 for better visualization, the odds beyond 1000 or essentially 0
+                      p_x = dpois(x = 0:1000, lambda = 582)) 
+puzzles_pmf %>%
+  ggplot(mapping = aes(x = x, y = p_x)) +
+  geom_col(color = "blue")
+
+puzzles_pmf
+```
+
+
+## 2.2 Quantitative Data 
+Select one quantitative variable. 
+
+**Selected Variable: Japan Sales**
+
+a) Check if the quantitative variable is from normal distribution. 
+
+```{r}
+sales_df %>%
+  ggplot(mapping = aes(sample = JP_Sales)) +
+  stat_qq() +
+  stat_qq_line(color = "red")
+```
+
+
+b) Find the sampling distribution of the sample mean of the quantitative variable with sample size of the sample size of at least 50. 
+
+*Mean*
+```{r}
+sales <- sales_df %>% pull(JP_Sales)
+
+mean(sales)
+```
+
+*Standard Deviation*
+```{r}
+sd(sales)/sqrt(0.07778166)
+```
+
+*Shape = Approximately Normal*
+n >= 30
+
+
+c) Find a probability of sample mean is greater than a number you choose. 
+P(X > 1)
+```{r}
+1 - pnorm(q = 1,
+      mean = 0.07778166,
+      sd = 1.108991)
+```
+
+
+# 3 One Sample: Confidence Interval and Hypothesis Testing
+Assume full data is a sample for this section. 
+
+## Section 3.1 Confidence interval
+
+a) Find the point estimate and 98% confidence interval for the population proportion from the variable selected in Section 2.1 part a).
+
+*Point Estimate*
+```{r}
+#Point Estimate
+p_hat <- p
+p_hat
+
+```
+
+*Check Requirements*
+1) n <= 0.05 N
+2) Simple random sample (assume yes)
+3) n p_hat (1-p_hat) >= 10
+```{r}
+n* p_hat* ((1-p_hat)) >= 10
+```
+
+*Construct and Interpret Confidence Interval*
+```{r}
+prop.test(x = 582, n = 16598, conf.level = 0.98)
+```
+
+*We are 98% confident that proportion of video games with the genre of "Puzzle" is between 0.03186289 and 0.03857188*
+
+b) Find the point estimate and 99% confidence interval for the population mean from the variable selected in Section 2.1 part b).
+
+*Point Estimate*
+```{r}
+mean(sales)
+```
+
+*Check Requirements*
+1) n <= 0.05 N
+2) Simple random sample
+3) n >= 30 or X ~ Normal
+```{r}
+n >= 30
+```
+
+*Construct and Interpret Confidence Interval*
+```{r}
+t.test(x = sales_df %>% pull(JP_Sales), conf.level = 0.99)
+```
+
+*We are 99% confident that the population mean for video games with the genre "Puzzle is between  0.07159714 and 0.08396618*
+
+## Section 3.2 One sample proportion hypothesis testing
+
+Formulate a research question to conduct a one-sample proportion hypothesis test based on the variable from section 2.1.
+
+a) State your research question.
+*Testing if the proportion of video games in the genre "Puzzle" is greater than 4% this year at alpha level = 0.01?*
+
+b) Conduction hypothesis test. 
+
+__Step 1__: State the hypotheses
+
+$H_0: p = .04$
+
+$H_A: p > .04$
+
+__Step 2__: What is the level of significance, $\alpha$?
+
+$\alpha = 0.01 $
+
+__Step 0__: Check requirement
+
+* n $\le$ 0.05N (independent samples) 
+* Simple random sample 
+* $np_0(1-p_0) \ge 10 $
+```{r}
+n* p* ((1-p)) >= 10
+```
+
+__Step 3__:  Calculate test statistics and p-value.
+
+```{r}
+n <- sales_df %>% pull(Genre) %>% length()
+x <- sales_df %>% filter(Genre == "Puzzle") %>% pull(Genre) %>% length
+n
+
+z_0 <- (x/n - 0.04)/ (sqrt(0.04 * (1-0.04)/n))
+z_0
+
+prop.test(x = 582, n = 16598, p = 0.04, alternative = "greater", correct = F)
+```
+
+__Step 4__: Decision
+*Since p-value = 0.9994 and is greater than alpha level 0.01, we fail to reject H_0*
+
+
+__Step 5__: Conclusion
+*There is insufficient evidence at alpha level = 0.01 that the proportion of video games with the genre "Puzzle" is greater than 4%.*
+
+
+
+## Section 3.2 One sample mean (t test) hypothesis testing
+
+Formulate a research question to conduct a one sample t test hypothesis test based on the variable in section 2.2.
+
+*The mean of Japanese sales for video games is greater than 80,000 dollars (our dataset uses decimals for millions, so it would be .5) at alpha = 0.05*
+
+__Step 1__: State the hypotheses
+
+$H_0: \mu = 80,000 $
+
+$H_A: \mu > 80,000 $
+
+__Step 2__: What is the level of significance, $\alpha$?
+
+$\alpha = 0.05 $
+
+
+__Step 0__: Check requirement
+
+* n $\le$ 0.05N (independent samples) 
+* Simple random sample 
+* n $\ge$ 30 or X ～ Normal  
+
+__Step 3__:  Calculate test statistics and p-value.
+
+```{r}
+sales <- sales_df %>% pull(JP_Sales)
+t.test(sales, mu = .08, alternative = "greater")
+```
+
+__Step 4__: Decision
+Since p-value = 0.8223 > 0.05, we fail to reject H_0: $\mu = 80,000 $
+
+__Step 5__: Conclusion
+There is insufficient evidence at $\alpha = 0.05$ that the mean of JP sales for video games is greater than 80,000 dollars.
+
+
+# 4 Two Samples t-test : Independent Sampling Method.
+
+Create a research question to perform a two-sample mean (independent t-test) hypothesis test using the variables you chose in section 2.
+
+a) Create the research question.  
+
+**Is the mean value of video game sales greater in North America than in Japan at a 0.05 significance level?**
+
+b)Run a hypothesis test to test your hypothesis.
+
+__Step 1__: State the hypotheses
+
+$H_0: \mu_1 = \mu_2$
+
+$H_A: \mu_1 > \mu_2$
+
+__Step 2__: What is the level of significance, $\alpha$?
+
+$\alpha = 0.05$
+
+
+__Step 0__: Check requirement
+
+* n1 <= 0.05N1 and n2 <= 0.05N2 
+* Simple Random Samples
+* n1 >= 30, n2 >= 30
+```{r}
+n1 <- sales_df %>% pull(NA_Sales) %>% length()
+n2 <- sales_df %>% pull(JP_Sales) %>% length()
+n1 >= 30
+n2 >= 30
+```
+
+
+__Step 3__:  Calculate test statistics and p-value.
+
+```{r}
+t.test(x = sales_df %>% pull(NA_Sales), y = sales_df %>% pull(JP_Sales), mu = 0, alternative = "greater", var.equal = F)
+```
+
+__Step 4__: Decision
+
+Since p-value = 2.2e-16 < 0.05, reject $H_0$
+
+__Step 5__: Conclusion
+
+There is sufficient evidence at $\alpha = 0.05$ to conclude that the average video game sales in NA is higher than in JP
+
+
+b) Use the Confidence interval to test your hypothesis.
+__Step 1__: State the hypotheses
+
+$H_0: \mu_d = 0$
+
+$H_A: \mu_d < 0$
+
+__Step 2__: Construct Confidence Interval
+```{r}
+t.test(x = sales_df %>% pull(NA_Sales), y = sales_df %>% pull(JP_Sales), conf.level = 0.90)
+```
+
+__Step 3__:  Decision
+
+Since p-value = 2.2e-16 < 0.05, reject $H_0$
+
+__Step 4__: Conclusion
+
+There is sufficient evidence at $\alpha = 0.05$ to conclude that the average video game sales in NA is higher than in JP
+
+# 5 Simple Linear regression
+
+Use two quantitative variables to show if there is a linear relationship between them. 
+*Is there a linear relationship between video game sales in North America and sales in Japan?*
+
+__Step 1__: State the hypotheses
+
+$H_0: \beta = 0$
+
+$H_A: \beta \neq 0$
+
+__Step 2__: What is the level of significance, $\alpha$?
+
+$\alpha = 0.01 $
+
+
+__Step 0__: Check requirement
+
+*
+*SRS*
+*  Resid ~Normal
+```{r}
+na_sales <- sales_df %>% pull(NA_Sales)
+jp_sales <- sales_df %>% pull(JP_Sales)
+#Draws line
+sales_df %>%
+  ggplot(mapping = aes(x = na_sales, y = jp_sales)) +
+  geom_point(color = "coral") +
+  geom_smooth(method = "lm", se = F)
+
+
+```
+
+
+__Step 3__:  Calculate test statistics and p-value.
+
+```{r}
+sales_mod <- lm(formula = jp_sales ~ na_sales, data = sales_df)
+sales_mod %>% summary()
+```
+*p-value = 0*
+
+__Step 4__: Decision
+Since p-value = 0, which is less than alpha = 0.01, we reject H_0
+
+__Step 5__: Conclusion
+There is sufficient evidence at alpha = 0.01 that there is a linear relationship between video game sales in North America and Japan.
+
+# 6: Report
+
+Section 1.3:
+Most sales for North America and Japan are around 0. The most amount of games sold by genre is action games and the platform that is sold to the most is the PS2 and the DS. 
+
+Section 3:
+With a 98% confidence interval, the proportion of puzzle video games in our dataset is between  0.03186289 and 0.03857188. We are 99% confident that the population mean for video games with the genre "Puzzle is between  0.07159714 and 0.08396618
+
+One sample proportion hypothesis testing:
+Hypothesis: *Testing if the proportion of video games in the genre "Puzzle" is greater than 4% this year at alpha level = 0.01?*
+Conclusion: With our one sample proportion hypothesis testing.  At alpha = 0.01, there is insufficient evidence that the proportion of video games with the genre "Puzzle" is greater than 4%, which is also validated by our 98% proportion confidence interval.
+
+One sample mean (t test) hypothesis testing:
+Hypothesis: *The mean of Japanese sales for video games is greater than 80,000 dollars (our dataset uses decimals for millions, so it would be .5) at alpha = 0.05*
+Conclusion: There is insufficient evidence at $\alpha = 0.05$ that the mean of JP sales for video games is greater than 80,000 dollars.
+
+Section 4:
+Independent Sampling Method: 
+Hypothesis: **Is the mean value of video game sales greater in North America than in Japan at a 0.05 significance level?**
+Conclusion: There is sufficient evidence at $\alpha = 0.05$ to conclude that the average video game sales in NA is higher than in JP
+
+Confidence interval to test hypothesis (conclusion):
+There is sufficient evidence at $\alpha = 0.05$ to conclude that the average video game sales in NA is higher than in JP
+
+Section 5:
+Simple Linear Regression:
+Hypothesis: *Is there a linear relationship between video game sales in North America and sales in Japan?*
+Conclusion: There is sufficient evidence at $\alpha = 0.01$ that there is a linear relationship between video game sales in North America and Japan.
+
+
